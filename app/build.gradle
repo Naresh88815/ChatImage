@@ -49,4 +49,7 @@ dependencies {
     implementation libs.androidx.lifecycle.viewmodel
     implementation libs.androidx.lifecycle.viewmodel.ktx
     implementation libs.androidx.lifecycle.livedata
+
+    implementation libs.glide // Latest stable version as of now
+    annotationProcessor libs.compiler // For Glide annotation processing
 }

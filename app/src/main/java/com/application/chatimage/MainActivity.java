@@ -1,18 +1,34 @@
 package com.application.chatimage;
 
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.widget.ImageButton;
+import android.widget.Button;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
+
     private ChatViewModel chatViewModel;
     private RecyclerView chatRecyclerView;
     private ChatAdapter chatAdapter;
-    private ImageButton btnNamaste, btnSurprise, btnAngry, btnGoodJob, btnGoodbye;
+    private Button btnUploadImage;
+
+    // Initialize ActivityResultLauncher for image picking
+    private final ActivityResultLauncher<Intent> pickImageLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Uri selectedImageUri = result.getData().getData();
+                    sendMessage(selectedImageUri.toString()); // Send the image URI
+                }
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,18 +40,14 @@ public class MainActivity extends AppCompatActivity {
 
         // Initialize views
         chatRecyclerView = findViewById(R.id.chatRecyclerView);
-        btnNamaste = findViewById(R.id.btnNamaste);
-        btnSurprise = findViewById(R.id.btnSurprise);
-        btnAngry = findViewById(R.id.btnAngry);
-        btnGoodJob = findViewById(R.id.btnGoodJob);
-        btnGoodbye = findViewById(R.id.btnGoodbye);
+        btnUploadImage = findViewById(R.id.btnUploadImage); // Button for uploading image
 
         // Setup RecyclerView
         chatRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         chatAdapter = new ChatAdapter(new ArrayList<>());
         chatRecyclerView.setAdapter(chatAdapter);
 
-        // Observe messages
+        // Observe messages from ViewModel
         chatViewModel.getAllMessages().observe(this, messages -> {
             chatAdapter = new ChatAdapter(messages);
             chatRecyclerView.setAdapter(chatAdapter);
@@ -47,53 +59,55 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupButtonClickListeners() {
-        btnNamaste.setOnClickListener(v -> sendMessage(R.drawable.namaste));
-        btnSurprise.setOnClickListener(v -> sendMessage(R.drawable.surprise));
-        btnAngry.setOnClickListener(v -> sendMessage(R.drawable.angry));
-        btnGoodJob.setOnClickListener(v -> sendMessage(R.drawable.good_job));
-        btnGoodbye.setOnClickListener(v -> sendMessage(R.drawable.goodbye));
+        // Set the click listener for the image upload button
+        btnUploadImage.setOnClickListener(v -> openImagePicker());
     }
 
-    private void sendMessage(int imageResource) {
-        // Create and insert user message
-        ChatMessage userMessage = new ChatMessage(
-                imageResource,
-                System.currentTimeMillis(),
-                true
-        );
+    // Opens the image picker dialog
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        intent.setType("image/*");
+        pickImageLauncher.launch(intent);
+    }
+
+    // Send message with the selected image URI
+    private void sendMessage(String imageUri) {
+        ChatMessage userMessage = new ChatMessage(imageUri, System.currentTimeMillis(), true);
         chatViewModel.insert(userMessage);
 
-        // Send auto response after delay
-        chatRecyclerView.postDelayed(() -> sendAutoResponse(), 1000);
+        // Send an auto response after a short delay
+        chatRecyclerView.postDelayed(this::sendAutoResponse, 1000);
     }
 
+    // Auto-response to the user's message
     private void sendAutoResponse() {
         int responseType = (int) (Math.random() * 5) + 1;
-        int responseImageResource;
+        String responseImageUri;
 
-        switch(responseType) {
+        switch (responseType) {
             case 1:
-                responseImageResource = R.drawable.namaste;
+                responseImageUri = getDrawableUri(R.drawable.namaste);
                 break;
             case 2:
-                responseImageResource = R.drawable.surprise;
+                responseImageUri = getDrawableUri(R.drawable.surprise);
                 break;
             case 3:
-                responseImageResource = R.drawable.angry;
+                responseImageUri = getDrawableUri(R.drawable.angry);
                 break;
             case 4:
-                responseImageResource = R.drawable.good_job;
+                responseImageUri = getDrawableUri(R.drawable.good_job);
                 break;
             default:
-                responseImageResource = R.drawable.goodbye;
+                responseImageUri = getDrawableUri(R.drawable.goodbye);
                 break;
         }
 
-        ChatMessage autoResponse = new ChatMessage(
-                responseImageResource,
-                System.currentTimeMillis(),
-                false
-        );
+        ChatMessage autoResponse = new ChatMessage(responseImageUri, System.currentTimeMillis(), false);
         chatViewModel.insert(autoResponse);
+    }
+
+    private String getDrawableUri(int resourceId) {
+        // Convert the drawable resource ID to a URI string
+        return "android.resource://" + getPackageName() + "/" + resourceId;
     }
 }

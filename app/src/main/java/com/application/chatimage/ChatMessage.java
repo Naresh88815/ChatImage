@@ -9,8 +9,8 @@ public class ChatMessage {
     @PrimaryKey(autoGenerate = true)
     public int id;
 
-    @ColumnInfo(name = "image_resource")
-    public int imageResource;
+    @ColumnInfo(name = "image_uri")
+    public String imageUri;
 
     @ColumnInfo(name = "timestamp")
     public long timestamp;
@@ -18,10 +18,20 @@ public class ChatMessage {
     @ColumnInfo(name = "is_sent")
     public boolean isSent;
 
+    // Constructor for string URI
+    public ChatMessage(String imageUri, long timestamp, boolean isSent) {
+        this.imageUri = imageUri;
+        this.timestamp = timestamp;
+        this.isSent = isSent;
+    }
+
+    // Constructor for resource ID (if you change the class to accept it)
     public ChatMessage(int imageResource, long timestamp, boolean isSent) {
-        this.imageResource = imageResource;
+        this.imageUri = String.valueOf(imageResource);
         this.timestamp = timestamp;
         this.isSent = isSent;
     }
 }
+
+
 

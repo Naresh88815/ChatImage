@@ -7,24 +7,22 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class ChatRepository {
-    private ChatMessageDao messageDao;
-    private LiveData<List<ChatMessage>> allMessages;
-    private ExecutorService executorService;
+    private final AppDatabase database;
+    private final ExecutorService executorService;
 
     public ChatRepository(Application application) {
-        AppDatabase db = AppDatabase.getDatabase(application);
-        messageDao = db.chatMessageDao();
-        allMessages = messageDao.getAllMessages();
-        executorService = Executors.newSingleThreadExecutor();
+        this.database = AppDatabase.getInstance(application);
+        this.executorService = Executors.newSingleThreadExecutor();
     }
 
+    // DAO methods
     public LiveData<List<ChatMessage>> getAllMessages() {
-        return allMessages;
+        return database.chatMessageDao().getAllMessages();
     }
 
     public void insert(ChatMessage message) {
         executorService.execute(() -> {
-            messageDao.insert(message);
+            database.chatMessageDao().insert(message);
         });
     }
 }

@@ -10,6 +10,8 @@ import android.widget.FrameLayout;
 import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -32,24 +34,23 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     @Override
     public void onBindViewHolder(ChatViewHolder holder, int position) {
         ChatMessage message = messages.get(position);
-        holder.messageImage.setImageResource(message.imageResource);
 
-        // Format the timestamp to a readable time string
-        SimpleDateFormat dateFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-        String formattedTime = dateFormat.format(new Date(message.timestamp));
-        holder.messageTime.setText(formattedTime);
+        // Load image
+        Glide.with(holder.messageImage.getContext())
+                .load(message.imageUri)
+                .into(holder.messageImage);
 
-        // Align the message based on isSent status
-        FrameLayout.LayoutParams params =
-                (FrameLayout.LayoutParams) holder.messageContainer.getLayoutParams();
+        // Format and set the message date and time
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy hh:mm a", Locale.getDefault());
+        String formattedDateTime = dateFormat.format(new Date(message.timestamp));  // Assume timestamp is in milliseconds
+        holder.messageTime.setText(formattedDateTime);
 
-        if (message.isSent) {
-            params.gravity = Gravity.START;
-        } else {
-            params.gravity = Gravity.END;
-        }
+        // Set gravity and layout parameters based on whether the message is sent or received
+        FrameLayout.LayoutParams params = (FrameLayout.LayoutParams) holder.messageContainer.getLayoutParams();
+        params.gravity = message.isSent ? Gravity.START : Gravity.END;
         holder.messageContainer.setLayoutParams(params);
     }
+
 
     @Override
     public int getItemCount() {
