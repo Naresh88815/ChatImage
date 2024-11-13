@@ -24,3 +24,4 @@ public class ChatMessage {
         this.isSent = isSent;
     }
 }
+
